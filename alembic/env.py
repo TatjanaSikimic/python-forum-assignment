@@ -19,7 +19,8 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-# TODO: Import metadata for database models
+# TODO: Import metadata for database models, so autogenerate would work
+# TODO: Use configuration from dotenv file or real environment variables (depending if running locally or in docker)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

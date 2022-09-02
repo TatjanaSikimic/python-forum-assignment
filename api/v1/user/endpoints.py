@@ -37,6 +37,8 @@ def delete_user_signature():
     pass
 
 
+# TODO: Messaging uses RabbitMQ. You can use pika or aio-pika adapter for RabbitMQ, both are included
+
 @router.post('/messaging')
 def send_message_to_user():
     # Message is sent to the amqp service, to user queue

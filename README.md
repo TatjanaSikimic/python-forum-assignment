@@ -9,6 +9,18 @@ Service should implement basic authentication mechanism. It consists of:
 - Login - Simple login method using username and password
 - Logout - Simple logout method, removes user session
 
+
+### Project structure
+Every group of endpoints is separated by directory. Every directory includes these files:
+- `__init__.py` - Can be used for declaring external imports, but still optional
+- `endpoints.py` - Endpoints for specific group, along with their API router
+- `helpers.py` - Can be used for any additional functions, you can also create specific file if necessary, for functions
+- `schemas.py` - Used for **pydantic** models, which are used for validation and consistency. Every endpoint that needs 
+more than one argument to function properly should use a validation model.
+
+You should follow this structure, but any changes are welcome, if you find them necessary.
+
+
 ### Authentication
 
 Authentication mechanism is as follows:
@@ -17,12 +29,12 @@ Login, if correct, should set JWT cookie.
 
 Data that should be inside of JWT:
 
-```json
+```json lines
 {
   "sub": "112", // ID of the user in the system
   "iat": 1662032329, // Token creation time
-  "exp": 1662035929 // Token expiration timestamp (Must be integer, use jwt datetime_to_int)
-  "data": {} // If there is anything that can be stored in token, that can be used to implement some of the endpoints
+  "exp": 1662035929, // Token expiration timestamp (Must be integer, use jwt datetime_to_int)
+  "data": {} // If there is anything that can be stored in token, that can be used to implement some endpoints
 }
 ```
 
@@ -148,9 +160,32 @@ Optional services:
 - Redis
 - Memcached
 
+Libraries that should be used for project implementation:
+- `fastapi` - Used for creating REST API (https://fastapi.tiangolo.com/)
+- `SQLAlchemy` - Used as PostgreSQL tool and ORM (https://docs.sqlalchemy.org/en/14/)
+- `pydantic` - Used for validating input and output data models (https://pydantic-docs.helpmanual.io/)
+- `pyhumps` - Library used for a lot of string conversions (https://humps.readthedocs.io/en/latest/)
+- `uvicorn` - ASGI web server implementation, similar to gunicorn, hypercorn etc. (https://www.uvicorn.org/)
+- `pika` - RabbitMQ adapter, that fully supports AMQP 0-9-1 protocol (https://pika.readthedocs.io/en/stable/index.html)
+- `aio-pika` - AsyncIO implementation of pika, can be used in async endpoints, preferred for messaging implementation (https://aio-pika.readthedocs.io/en/latest/)
+- `alembic` - DB migration tool, specifically designed to be used with SQLAlchemy (https://alembic.sqlalchemy.org/en/latest/)
+- `psycopg2` - DB driver for PostgreSQL (https://www.psycopg.org/docs/)
+- `python-dotenv` - Library that supports reading the data from `.env` file, and adds it to `os.env`, to be used in application (https://github.com/theskumar/python-dotenv)
+- `redis` - Redis python interface (https://github.com/redis/redis-py)
 
+Any additional libraries are not necessary for the project completion, but if they make the job of finishing easier, just note them in your repository, and what are they used for.
 
 ### Additional implementation commentary
-For all of the services that need to run, in order for application to work properly, must be dockerized.
+All services must be dockerized, in order for application to work properly. Proper dependencies need to be in place 
+in docker-compose.yaml. https://docs.docker.com/compose/compose-file/
+
+Dockerfile would also need
+
+Migrations need to be created through alembic CLI, for reference use https://alembic.sqlalchemy.org/en/latest/
+
+For initialization process, database needs migration, and also needs to be created on the server, if it does not exist.
+Initialization process can also be done while building the application, although preferred way is through init build process.
+
+
 
 Have fun, and good luck. For any questions, feel free to contact us through email we provided.

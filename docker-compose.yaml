@@ -1,5 +1,5 @@
 version: "3.5"
-# Modify every service so it uses proper images, proper networking etc.
+# TODO: Modify every service so it uses proper images, proper networking etc.
 services:
   postgresql:
     image: dummy_image
