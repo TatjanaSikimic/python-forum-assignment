@@ -111,7 +111,7 @@ Comments are simplified posts, they cannot contain attachments, only text.
     "avatar": "https://example.com/avatar.jpg",
     "signature": "Very cool signature"
   },
-  "content": "This is some cool post with attachments, here is one attachment: ~[1123~], and there is also another one ~[1124~]"
+  "content": "This is a simple comment to a post"
 }
 ```
 
@@ -147,5 +147,10 @@ Additional services that should be used:
 Optional services:
 - Redis
 - Memcached
+
+
+
+### Additional implementation commentary
+For all of the services that need to run, in order for application to work properly, must be dockerized.
 
 Have fun, and good luck. For any questions, feel free to contact us through email we provided.

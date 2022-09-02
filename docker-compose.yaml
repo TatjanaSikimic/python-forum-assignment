@@ -1,0 +1,40 @@
+version: "3.5"
+# Modify every service so it uses proper images, proper networking etc.
+services:
+  postgresql:
+    image: dummy_image
+    networks:
+      - assigment_network
+
+  rabbitmq:
+    image: dummy_image
+    networks:
+      - assigment_network
+
+  app:
+    # Does not use preexisting image, it should be built using Dockerfile.app
+    build:
+      context: .
+    networks:
+      - assigment_network
+
+  init:
+    # Optional, initialization can also be done through app build
+    build:
+      context: .
+    networks:
+      - assigment_network
+
+  # Optional, for every new service, a docker-compose service should be added
+  redis:
+    image: dummy_image
+    restart: always
+    networks:
+      - assigment_network
+
+networks:
+  assigment_network:
+    external: true
+    name: assigment_network
+
+

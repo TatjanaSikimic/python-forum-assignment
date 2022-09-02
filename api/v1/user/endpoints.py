@@ -8,6 +8,9 @@ router = APIRouter()
 # You can modify these endpoints to your liking, but support avatar update and user signature update
 # If the user is not logged in, none of these endpoints should work
 
+# TODO: Avatar add, update, delete functionality using static files, look in fastapi documentation
+# TODO: Signature add, update, delete functionality
+
 @router.post('/avatar')
 def add_user_avatar():
     # static image, should be saved, and can be retrieved as link

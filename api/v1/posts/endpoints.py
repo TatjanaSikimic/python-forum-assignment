@@ -5,29 +5,42 @@ from . import helpers, schemas
 router = APIRouter()
 
 
-@router.get('/{id_thread}')
-def get_thread_post_listing():
-    # List of posts in thread, requires pagination support
+# TODO: Retrieve all posts that user created
+# TODO: Include thread information for that specific post
+# TODO: Add configurable pagination
+@router.get('/')
+def get_user_posts():
     pass
 
 
+# TODO: Retrieve all posts for thread with specific ID
+# TODO: Add configurable pagination
+@router.get('/{id_thread}')
+def get_thread_post_listing():
+    pass
+
+
+# TODO: Retrieve a post with specific ID
 @router.get('/post/{id_post}')
 def get_post_by_id():
     pass
 
 
+# TODO: Create post for the thread with specific ID
 @router.post('/{id_thread}')
 def create_thread_post():
     pass
 
 
+# TODO: Update post for the thread with specific ID
+# Can only be updated by the user who created the post
 @router.put('/{id_thread}')
 def update_thread_post():
-    # Post can be edited (updated) only by the same user who created it
     pass
 
 
+# TODO: Delete post for the thread with specific ID
+# Can only be deleted by the user who created the post
 @router.delete('/post/{id_post}')
 def delete_post_by_id():
-    # Post can be deleted only by the same user who created it
     pass
