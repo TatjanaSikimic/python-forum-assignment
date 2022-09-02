@@ -1,6 +1,7 @@
 from pydantic import BaseModel as PydanticBaseModel
 
 
+# This should be the base model that is inherited
 class BaseModel(PydanticBaseModel):
     pass
 

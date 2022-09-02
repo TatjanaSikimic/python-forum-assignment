@@ -7,6 +7,7 @@ router = APIRouter()
 # TODO: Retrieve all comments that user created
 # TODO: Include post information for that specific comment
 # TODO: Add configurable pagination
+# User needs to be logged in for this endpoint to function
 @router.get('/')
 def get_user_comments():
     pass

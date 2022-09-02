@@ -186,6 +186,8 @@ Migrations need to be created through alembic CLI, for reference use https://ale
 For initialization process, database needs migration, and also needs to be created on the server, if it does not exist.
 Initialization process can also be done while building the application, although preferred way is through init build process.
 
+All of the assignments should be marked with TODO comment, preferred IDE to use is PyCharm, it has integrated TODO tool 
 
+Unit tests are not needed for this assignment. Create test
 
 Have fun, and good luck. For any questions, feel free to contact us through email we provided.

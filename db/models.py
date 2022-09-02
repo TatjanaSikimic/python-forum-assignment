@@ -8,13 +8,14 @@ class Base:
 
 # https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/basic_use.html
 
+
 # Example of the table, for the assigment refer to https://docs.sqlalchemy.org/en/14/#
-
-
 class SomeTable(Base):
     __tablename__ = 'some_table'
 
     id = Column(Integer, primary_key=True)
 
+
+# TODO: Include models that need to be in the database, along with their relationships
 # TODO: Check how to get models metadata
 

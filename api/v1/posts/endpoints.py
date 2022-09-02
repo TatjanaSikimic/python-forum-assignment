@@ -8,6 +8,7 @@ router = APIRouter()
 # TODO: Retrieve all posts that user created
 # TODO: Include thread information for that specific post
 # TODO: Add configurable pagination
+# User needs to be logged in for this endpoint to function
 @router.get('/')
 def get_user_posts():
     pass
