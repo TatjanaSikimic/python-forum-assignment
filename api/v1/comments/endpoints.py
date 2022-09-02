@@ -21,6 +21,7 @@ def get_post_comments(id_post: int):
 
 
 # TODO: Retrieve a comment with specific ID
+# It also needs to include a post it is referring to, and thread as well
 @router.get('/single/{id_comment}')
 def get_post_by_id():
     pass

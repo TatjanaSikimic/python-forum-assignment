@@ -22,6 +22,7 @@ def get_thread_post_listing():
 
 
 # TODO: Retrieve a post with specific ID
+# It also needs to include a thread it is referring to
 @router.get('/post/{id_post}')
 def get_post_by_id():
     pass

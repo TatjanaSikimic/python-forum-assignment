@@ -1,5 +1,5 @@
 ## SimpleForum
-This project is the backend service for forum application. Its hierarchy is as follows:
+In this assignment you will create backend service for forum application. Its hierarchy is as follows:
 - Threads - the main structure, they should behave like groups of topics (e.g. Pets, Medicine...)
 - Posts - Posts behave like topics, they can be created inside the thread (e.g. How can I ...?)
 - Comments - Comments exist inside posts, visually, they follow the post, but are bound to the post structure
@@ -9,6 +9,7 @@ Service should implement authentication mechanism. It consists of:
 - Login - Simple login method using username and password
 - Logout - Simple logout method, removes user session
 
+Also, service supports messaging system, using AMQP in the background.
 
 ### Project structure
 Every group of endpoints is separated by directory. Every directory includes these files:
@@ -52,7 +53,7 @@ Every node in the hierarchy can be created by any user. When created, any of the
 Thread needs to contain title, datetime of creation, datetime of update, some information of the user that created it (e.g. Link to their avatar or None, username). 
 Datetime of the update is updated any time the post or comment is created or updated, as well as when the thread is updated.
 
-Example of the thread:
+Partial example of the thread (Fields that should be presented):
 ```json
 {
   "title": "Some thread title",
@@ -70,7 +71,7 @@ Example of the thread:
 Posts function similarly to threads, they should contain the same things as threads (Title, user data, datetime of creation, datetime of update).
 They must also contain text content, with a size of minimum 50 characters, and optionally contain attachments (Attachments are uploaded as files, there can be multiple attachments on the same post).
 
-Example of the post without attachments:
+Partial example of the post without attachments (Fields that should be presented):
 
 ```json
 {
@@ -87,7 +88,7 @@ Example of the post without attachments:
 }
 ```
 
-Example of the post with attachments:
+Partial example of the post with attachments (Fields that should be presented):
 
 ```json
 {
@@ -112,6 +113,8 @@ Datetime of the post update is updated any time the comment is created or update
 #### Comments
 
 Comments are simplified posts, they cannot contain attachments, only text.
+
+Partial example of the comment (Fields that should be presented):
 ```json
 {
   "title": "Some comment",
@@ -136,7 +139,7 @@ User can also create and read messages. Messaging needs to be implemented using 
 Messages are the way of communication between users. Messages are temporary, and can only be received once (Optionally, you can store them). They are sent to the RabbitMQ, to user specific queue.
 When the user wants to check their messages, a new connection to RabbitMQ is created, and service should then retrieve the messages that are in the queue.
 
-Message example:
+Partial example of the message (Fields that should be presented):
 ```json
 {
   "dtCreated": "2022-01-01T00:00:00.000",
@@ -178,10 +181,15 @@ Any additional libraries are not necessary for the project completion, but if th
 ### Assignment workflow
 To start working on this assignment, you need GitLab account. Assuming that you can view this repository, we are on track.
 
-You should fork this project, and add emails for contact to your project, so we could track the progress,
-and assist you with any questions you might have. Assignment needs to follow basic git flow, 
-commit messages should have standardized structure. Base commit message must not be larger than 100 characters, 
-and any additional work should be added as an additional comment.   
+You should fork this project, and add our emails as project members, so we could track the progress,
+and assist you with any questions you might have. 
+
+To add additional members to your project, in the right sidebar, select **Project Information** > **Members**,
+and on the left hand side, click on **Invite members**. Members should be added with Reporter role. 
+
+Assignment needs to follow basic git flow, commit messages should have standardized structure.
+Base commit message must not be larger than 100 characters, 
+and any additional work in the commit should be added as additional comment.   
 
 **Time to finish the assignment is 7 days, starting from the day you have received the assignment**.
 Commits done after that time will not be included in assignment review.
