@@ -1,92 +1,151 @@
-# Python Forum Assignment
+## SimpleForum
+This project is the backend service for forum application. Its hierarchy is as follows:
+- Threads - the main structure, they should behave like groups of topics (e.g. Pets, Medicine...)
+- Posts - Posts behave like topics, they can be created inside the thread (e.g. How can I ...?)
+- Comments - Comments exist inside posts, visually, they follow the post, but are bound to the post structure
 
+Service should implement basic authentication mechanism. It consists of:
+- Registration - Simple registration using username and password
+- Login - Simple login method using username and password
+- Logout - Simple logout method, removes user session
 
+### Authentication
 
-## Getting started
+Authentication mechanism is as follows:
+Registration is going through username and password, password should be validated, to be strong enough (At least one uppercase letter, at least one special character, at least one number, length minimum of 8 characters).
+Login, if correct, should set JWT cookie. 
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Data that should be inside of JWT:
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
+```json
+{
+  "sub": "112", // ID of the user in the system
+  "iat": 1662032329, // Token creation time
+  "exp": 1662035929 // Token expiration timestamp (Must be integer, use jwt datetime_to_int)
+  "data": {} // If there is anything that can be stored in token, that can be used to implement some of the endpoints
+}
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/aleacontrol/python-forum-assignment.git
-git branch -M main
-git push -uf origin main
+
+JWT should be sent using setcookie response method (FastAPI documentation provides that). Field for the cookie can be named auth_token, sess_token etc.
+Expiration time is 1 hour.
+
+Also, signature needs to be checked, and all JWTs sent need to be signed. If the token expires, session expires as well (remove cookie, or set cookie to None, or null). Then user needs to login again. (Use middleware for checking the token)
+Logout functions the same as expiration, removing the token from the cookies.
+
+
+### Threads, posts, comments
+Every node in the hierarchy can be created by any user. When created, any of the nodes created by the specific user can only be updated by the same user. 
+
+#### Threads
+
+Thread needs to contain title, datetime of creation, datetime of update, some information of the user that created it (e.g. Link to their avatar or None, username). 
+Datetime of the update is updated any time the post or comment is created or updated, as well as when the thread is updated.
+
+Example of the thread:
+```json
+{
+  "title": "Some thread title",
+  "dtCreated": "2022-01-01T00:00:00.000",
+  "dtUpdated": "2022-01-01T00:00:00.000",
+  "user": {
+    "username": "somebody133",
+    "avatar": "https://example.com/avatar.jpg",
+    "signature": "Some signature"
+  }
+}
+```
+#### Posts
+
+Posts function similarly to threads, they should contain the same things as threads (Title, user data, datetime of creation, datetime of update).
+They must also contain text content, with a size of minimum 50 characters, and optionally contain attachments (Attachments are uploaded as files, there can be multiple attachments on the same post).
+
+Example of the post without attachments:
+
+```json
+{
+  "title": "Some post",
+  "dtCreated": "2022-01-01T00:00:00.000",
+  "dtUpdated": "2022-01-01T00:00:00.000",
+  "user": {
+    "username": "somebody133",
+    "avatar": "https://example.com/avatar.jpg",
+    "signature": "Some signature"
+  },
+  "content": "This is some cool post, ....",
+  "attachments": {}
+}
 ```
 
-## Integrate with your tools
+Example of the post with attachments:
 
-- [ ] [Set up project integrations](https://gitlab.com/aleacontrol/python-forum-assignment/-/settings/integrations)
+```json
+{
+  "title": "Some post",
+  "dtCreated": "2022-01-01T00:00:00.000",
+  "dtUpdated": "2022-01-01T00:00:00.000",
+  "user": {
+    "username": "somebody133",
+    "avatar": "https://example.com/avatar.jpg",
+    "signature": "Some signature"
+  },
+  "content": "This is some cool post with attachments, here is one attachment: ~[1123~], and there is also another one ~[1124~]",
+  "attachments": {
+    "1123": "https://example.com/attachment1.jpg",
+    "1124": "https://example.com/attachment2.jpg"
+  }
+}
+```
 
-## Collaborate with your team
+Datetime of the post update is updated any time the comment is created or updated, as well as when the post is updated.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+#### Comments
 
-## Test and Deploy
+Comments are simplified posts, they cannot contain attachments, only text.
+```json
+{
+  "title": "Some comment",
+  "dtCreated": "2022-01-01T00:00:00.000",
+  "dtUpdated": "2022-01-01T00:00:00.000",
+  "user": {
+    "username": "somebody133",
+    "avatar": "https://example.com/avatar.jpg",
+    "signature": "Very cool signature"
+  },
+  "content": "This is some cool post with attachments, here is one attachment: ~[1123~], and there is also another one ~[1124~]"
+}
+```
 
-Use the built-in continuous integration in GitLab.
+### Users
+User can add, update and delete their avatar (Through image upload), and also add, update and delete their signature
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+User can also create and read messages.
 
-***
+#### Messages
 
-# Editing this README
+Messages are the way of communication between users. Messages are temporary, and can only be received once (Optionally, you can store them). They are sent to the RabbitMQ, to user specific queue.
+When the user wants to check their messages, a new connection to RabbitMQ is created, and service should then retrieve the messages that are in the queue.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Message example:
+```json
+{
+  "dtCreated": "2022-01-01T00:00:00.000",
+  "content": "Hello my friend, how are you today?",
+  "user": {
+    "username": "someotheruser",
+    "avatar": "https://example.com/someotheravatar.jpg",
+    "signature": "Very cool signature"
+  }
+}
+```
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+All the libraries needed to complete this project are in requirements.txt
 
-## Name
-Choose a self-explaining name for your project.
+Additional services that should be used:
+- PostgreSQL (DB solution)
+- RabbitMQ (For messaging part)
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Optional services:
+- Redis
+- Memcached
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Have fun, and good luck. For any questions, feel free to contact us through email we provided.
