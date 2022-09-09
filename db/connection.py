@@ -1,8 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
-from .. import config
+import config
 
 # TODO: Add proper engine configuration, using dotenv or environment variables
 DATABASE_USERNAME = config.DATABASE_USERNAME
