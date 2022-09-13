@@ -13,11 +13,11 @@ SQL_ALCHEMY_DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD
 engine = create_engine(SQL_ALCHEMY_DATABASE_URL)
 
 # TODO: Add session creation using the engine above
-session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def get_db():
-    db = session_local
+    db = SessionLocal
     try:
         yield db
     finally:
