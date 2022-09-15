@@ -3,8 +3,8 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, ForeignKey
 from sqlalchemy.ext.declarative import as_declarative
 from sqlalchemy.schema import CheckConstraint
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 from db.connection import Base
-import db.hashing
 
 # https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/basic_use.html
 
@@ -12,28 +12,29 @@ import db.hashing
 # TODO: Check how to get models metadata
 
 # Example of the table, for the assigment refer to https://docs.sqlalchemy.org/en/14/#
+# Base = declarative_base()
 class User(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, autoincrement=True, unique=True)
-    name = Column(String(50), nullable=False)
+    name = Column(String(50))
     username = Column(String(50), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     avatar = Column(String(255))
     signature = Column(String(50))
     threads = relationship("Thread")
     posts = relationship("Post")
+    messages = relationship("Message")
+    comments = relationship("Comment")
 
-    def __init__(self, id, name, username, password, avatar, signature, *args, **kwargs):
-        self.id = id
-        self.name = name
-        self.username = username
-        self.password = db.hashing.get_password_hash(password)
-        self.avatar = avatar
-        self.signature = signature
+    def __init__(self, *args, **kwargs):
 
-    def check_password(self, password):
-        return db.hashing.verify_password(self.password, password)
+        # self.name = kwargs.get('name')
+        # self.username = kwargs.get('username')
+        # self.password = db.hashing.get_password_hash(kwargs.get('password'))
+        # self.avatar = kwargs.get('avatar')
+        # self.signature = kwargs.get('signature')
+        self.__dict__.update(kwargs)
 
 class Thread(Base):
     __tablename__ = 'threads'
@@ -46,12 +47,12 @@ class Thread(Base):
     posts = relationship("Post")
     CheckConstraint('NOT(@dtUpdated < @dtCreated)')
 
-    def __init__(self, id, title, dt_created, dt_updated, user_id, *args, **kwargs):
-        self.id = id
+    def __init__(self, title, dt_created, dt_updated, user_id, *args, **kwargs):
         self.title = title
         self.dtCreated = dt_created
         self.dtUpdated = dt_updated
         self.user_id = user_id
+
 
 class Attachment(Base):
     __tablename__ = 'attachments'
@@ -64,6 +65,7 @@ class Attachment(Base):
         self.id = id
         self.path = path
         self.post_id = post_id
+
 
 class Post(Base):
     __tablename__ = 'posts'
@@ -79,7 +81,6 @@ class Post(Base):
     comments = relationship("Comment")
     CheckConstraint('CHECK(@content >= 50)')
 
-
     def __init__(self, id, title, dt_created, dt_updated, user_id, content, thread_id, *args, **kwargs):
         self.id = id
         self.title = title
@@ -88,6 +89,7 @@ class Post(Base):
         self.user_id = user_id
         self.content = content
         self.thread_id = thread_id
+
 
 class Comment(Base):
     __tablename__ = 'comments'
@@ -100,7 +102,7 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey('users.id'), unique=True)
     post_id = Column(Integer, ForeignKey('posts.id'), unique=True)
 
-    def __init__(self, id, title, dt_created, dt_updated, content, user_id, post_id , *args, **kwargs):
+    def __init__(self, id, title, dt_created, dt_updated, content, user_id, post_id, *args, **kwargs):
         self.id = id
         self.title = title
         self.dtCreated = dt_created
@@ -108,6 +110,7 @@ class Comment(Base):
         self.content = content
         self.user_id = user_id
         self.post_id = post_id
+
 
 class Message(Base):
     __tablename__ = 'messages'
@@ -124,20 +127,4 @@ class Message(Base):
         self.content = content
         self.sender_id = sender_id
         self.recipient_id = recipient_id
-
-# class User_Thread_Link(Base):
-#    __tablename__ = 'user_thread_link'
-#
-#    users_id = Column(Integer,
-#                      ForeignKey('users.id'),
-#                      primary_key=True,
-#                      unique=True)
-#
-#    thread_id = Column(Integer,
-#                       ForeignKey('threads.id'),
-#                       primary_key=True,
-#                       unique=True)
-
-
-
 

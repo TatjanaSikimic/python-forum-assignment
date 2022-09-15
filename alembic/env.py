@@ -20,9 +20,9 @@ fileConfig(config.config_file_name)
 # target_metadata = None
 import config as config_env
 from db.connection import Base
-from db.models import User,Thread,Post,Message,Comment,Attachment
-target_metadata = Base.metadata
+from db.models import User, Thread, Post, Comment, Attachment, Message
 
+target_metadata = Base.metadata
 
 
 # other values from the config, defined by the needs of env.py,
