@@ -20,7 +20,7 @@ fileConfig(config.config_file_name)
 # target_metadata = None
 import config as config_env
 from db.connection import Base
-from db.models import User, Thread, Post, Comment, Attachment, Message
+from db.models import User, Thread, Post, Comment, Attachment, Message, user_has_message
 
 target_metadata = Base.metadata
 

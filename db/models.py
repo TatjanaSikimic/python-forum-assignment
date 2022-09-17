@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, ForeignKeyConstraint
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, ForeignKeyConstraint, Table
 from sqlalchemy.ext.declarative import as_declarative
 from sqlalchemy.schema import CheckConstraint
 from sqlalchemy.orm import relationship
@@ -13,6 +13,13 @@ from db.connection import Base
 
 # Example of the table, for the assigment refer to https://docs.sqlalchemy.org/en/14/#
 # Base = declarative_base()
+
+user_has_message = Table(
+    "association",
+    Base.metadata,
+    Column("user_id", ForeignKey("users.id")),
+    Column("message_id", ForeignKey("messages.id")),
+)
 class User(Base):
     __tablename__ = 'users'
 
@@ -24,7 +31,7 @@ class User(Base):
     signature = Column(String(50))
     threads = relationship("Thread")
     posts = relationship("Post")
-    messages = relationship("Message")
+    messages = children = relationship("Message", secondary=user_has_message)
     comments = relationship("Comment")
 
     def __init__(self, *args, **kwargs):
@@ -116,13 +123,13 @@ class Message(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, unique=True)
     dt_created = Column(DateTime, default=datetime.datetime.utcnow, nullable=True)
     content = Column(String(255), nullable=True)
-    sender_id = Column(Integer, ForeignKey('users.id'), unique=True)
-    recipient_id = Column(Integer, ForeignKey('users.id'), unique=True)
+    # sender_id = Column(Integer, ForeignKey('users.id'), unique=True)
+    # recipient_id = Column(Integer, ForeignKey('users.id'), unique=True)
 
-    def __init__(self, dt_created, content, sender_id, recipient_id, *args, **kwargs):
+    def __init__(self, dt_created, content, *args, **kwargs):
         self.id = id
         self.dt_created = dt_created
         self.content = content
-        self.sender_id = sender_id
-        self.recipient_id = recipient_id
+        # self.sender_id = sender_id
+        # self.recipient_id = recipient_id
 
