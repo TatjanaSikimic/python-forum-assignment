@@ -17,8 +17,8 @@ from db.connection import Base
 user_has_message = Table(
     "association",
     Base.metadata,
-    Column("user_id", ForeignKey("users.id")),
-    Column("message_id", ForeignKey("messages.id")),
+    Column("user_id", ForeignKey("users.id"), unique=True),
+    Column("message_id", ForeignKey("messages.id"), unique=True),
 )
 class User(Base):
     __tablename__ = 'users'
@@ -31,7 +31,7 @@ class User(Base):
     signature = Column(String(50))
     threads = relationship("Thread")
     posts = relationship("Post")
-    messages = children = relationship("Message", secondary=user_has_message)
+    messages = relationship("Message", secondary=user_has_message)
     comments = relationship("Comment")
 
     def __init__(self, *args, **kwargs):
