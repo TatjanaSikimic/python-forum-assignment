@@ -11,9 +11,7 @@ import re
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 async def verify_username_exists(username: str, db_session: Session) -> Optional[User]:
-    res = db_session.query(User).filter(User.username == username).first()
-    print(res)
-    return res
+    return db_session.query(User).filter(User.username == username).first()
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)

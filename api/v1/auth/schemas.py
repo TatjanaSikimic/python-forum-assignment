@@ -1,3 +1,5 @@
+from typing import Optional
+
 from api.base.schemas import BaseModel
 from . import validator
 from pydantic import validator
@@ -15,4 +17,12 @@ class UserRegistration(BaseModel):
 
 
 class UserLogin(BaseModel):
-    pass  # Contains username and password
+    username: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class Token(BaseModel):
+    id: Optional[str] = None
