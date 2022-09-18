@@ -50,7 +50,7 @@ class Thread(Base):
     title = Column(String(255), nullable=False)
     dt_created = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     dt_updated = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id'), unique=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
     posts = relationship("Post")
     CheckConstraint('NOT(@dtUpdated < @dtCreated)')
 
@@ -66,10 +66,9 @@ class Attachment(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     path = Column(String(255))
-    post_id = Column(Integer, ForeignKey("posts.id"), unique=True)
+    post_id = Column(Integer, ForeignKey("posts.id"))
 
     def __init__(self, path, post_id, *args, **kwargs):
-        self.id = id
         self.path = path
         self.post_id = post_id
 
@@ -82,8 +81,8 @@ class Post(Base):
     dt_created = Column(DateTime, default=datetime.datetime.utcnow, nullable=True)
     dt_updated = Column(DateTime, default=datetime.datetime.utcnow, nullable=True)
     content = Column(String(255), nullable=True)
-    user_id = Column(Integer, ForeignKey('users.id'), unique=True)
-    thread_id = Column(Integer, ForeignKey("threads.id"), primary_key=True, unique=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    thread_id = Column(Integer, ForeignKey("threads.id"), primary_key=True)
     attachments = relationship("Attachment")
     comments = relationship("Comment")
     CheckConstraint('CHECK(@content >= 50)')
@@ -105,8 +104,8 @@ class Comment(Base):
     dt_created = Column(DateTime, default=datetime.datetime.utcnow, nullable=True)
     dt_updated = Column(DateTime, default=datetime.datetime.utcnow, nullable=True)
     content = Column(String(255), nullable=True)
-    user_id = Column(Integer, ForeignKey('users.id'), unique=True)
-    post_id = Column(Integer, ForeignKey('posts.id'), unique=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    post_id = Column(Integer, ForeignKey('posts.id'))
 
     def __init__(self, title, dt_created, dt_updated, content, user_id, post_id, *args, **kwargs):
         self.title = title
@@ -127,7 +126,6 @@ class Message(Base):
     # recipient_id = Column(Integer, ForeignKey('users.id'), unique=True)
 
     def __init__(self, dt_created, content, *args, **kwargs):
-        self.id = id
         self.dt_created = dt_created
         self.content = content
         # self.sender_id = sender_id

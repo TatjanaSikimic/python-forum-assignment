@@ -1,0 +1,154 @@
+import json
+from datetime import datetime
+from db.models import Post, Thread, Attachment, User, Comment
+from .schemas import DisplayPost, DisplayAttachment, DisplayPostWithTread
+from api.v1.user.schemas import DisplayUser
+
+
+def create_post(post, user_id, thread, database):
+    date_created = date_updated = datetime.utcnow()
+    new_post = Post(title=post.title,
+                    dt_created=date_created,
+                    dt_updated=date_updated,
+                    user_id=user_id,
+                    content=post.content,
+                    thread_id=thread.id)
+    database.add(new_post)
+    database.flush()
+    database.refresh(new_post)
+
+    attachments = post.attachments
+    for attachment in attachments:
+        new_attachment = Attachment(path=attachment, post_id=new_post.id)
+        database.add(new_attachment)
+        database.commit()
+        database.refresh(new_attachment)
+
+    ### Update the dt_updated in thread
+    thread.dt_updated = date_updated
+    database.add(thread)
+    database.commit()
+    database.refresh(thread)
+
+    return new_post
+
+
+def __convert_attachments_to_dict__(attachments):
+    dict = {}
+    for attachment in attachments:
+        dict[attachment.id] = attachment.path
+    return dict
+
+
+def __get_display_attachments__(post_id, database):
+    attachments = database.query(Attachment).filter(Attachment.post_id == post_id).all()
+
+    display_attachments = []
+    for attachment in attachments:
+        display_attachments.append(DisplayAttachment(id=attachment.id, path=attachment.path))
+
+    display_attachments = __convert_attachments_to_dict__(display_attachments)
+    return display_attachments
+
+
+def __get_display_user__(user_id, database):
+    user = database.query(User).filter(User.id == user_id).first()
+
+    display_user = DisplayUser(username=user.username, avatar=user.avatar, signature=user.signature)
+
+    return display_user
+
+
+async def get_posts_by_thread(thread_id, database):
+    display_posts = []
+    posts_db = database.query(Post).filter(Post.thread_id == thread_id).all()
+
+    for post_db in posts_db:
+        display_attachments = __get_display_attachments__(post_db.id, database)
+
+        display_user = __get_display_user__(post_db.user_id, database)
+
+        post = DisplayPost(title=post_db.title,
+                           dt_created=post_db.dt_created,
+                           dt_updated=post_db.dt_updated,
+                           user=display_user,
+                           content=post_db.content,
+                           attachments=display_attachments,
+                           )
+        display_posts.append(post)
+
+    return display_posts
+
+
+async def get_posts_by_user(user_id, database):
+    display_posts = []
+    posts_db = database.query(Post).filter(Post.user_id == user_id).all()
+
+    for post_db in posts_db:
+        post = get_post_by_id(post_db,database)
+        display_posts.append(post)
+
+    return display_posts
+
+async def get_post_by_id(post,database):
+    display_attachments = __get_display_attachments__(post.id, database)
+
+    display_user = __get_display_user__(post.user_id, database)
+
+    thread = database.query(Thread).filter(Thread.id == post.thread_id).first()
+
+    display_post = DisplayPostWithTread(thread_title=thread.title,
+                                        thread_dt_created=thread.dt_created,
+                                        thread_dt_updated=thread.dt_updated,
+                                        title=post.title,
+                                        dt_created=post.dt_created,
+                                        dt_updated=post.dt_updated,
+                                        user=display_user,
+                                        content=post.content,
+                                        attachments=display_attachments)
+    return display_post
+
+def __delete_attachments__(post_id,database):
+    attachments = database.query(Attachment).filter(Attachment.post_id == post_id).all()
+    [database.delete(attachment) for attachment in attachments]
+    database.commit()
+
+def __delete_comments__(post_id,database):
+    comments = database.query(Comment).filter(Comment.post_id == post_id).all()
+    [database.delete(comment) for comment in comments]
+    database.commit()
+
+def delete_post(post,database):
+    __delete_attachments__(post.id,database)
+
+    #__delete_comments__(post.id,database)
+    database.delete(post)
+    database.commit()
+
+async def update_post(post:DisplayPost,post_db:Post, thread,database):
+    for key in post.attachments:
+        attachment_to_update = Attachment(path=post.attachments[key])
+        database.add(attachment_to_update)
+        database.commit()
+        database.refresh(attachment_to_update)
+
+    post_db.title = post.title
+    post_db.content = post.content
+    post.dt_created = post.dt_created
+    post_db.dt_updated = datetime.utcnow()
+
+    database.add(post_db)
+    database.commit()
+    database.refresh(post_db)
+
+    thread.dt_updated = datetime.utcnow()
+    database.add(thread)
+    database.commit()
+    database.refresh()
+
+
+
+
+
+
+

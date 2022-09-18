@@ -2,7 +2,8 @@ from api.base.schemas import BaseModel
 
 
 class BaseComment(BaseModel):
-    pass  # Needs to have text
+    title: str  # Needs to have text
+    content: str
 
 
 class CommentUpdate(BaseComment):
