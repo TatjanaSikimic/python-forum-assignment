@@ -17,7 +17,7 @@ router = APIRouter()
 # TODO: Include thread information for that specific post
 # TODO: Add configurable pagination
 # User needs to be logged in for this endpoint to function
-@router.get('/posts/user', response_model=List[schemas.DisplayPostWithTread])
+@router.get('/posts/user', response_model=List[schemas.DisplayPostWithThread])
 async def get_user_posts(user_id: int, database: Session = Depends(db.connection.get_db)):
     ### dodati limit
     user = database.query(User).filter(User.id == user_id).first()
@@ -74,7 +74,7 @@ def create_thread_post(id_thread: int, data: schemas.PostCreate, database: Sessi
 # TODO: Update post for the thread with specific ID
 # Can only be updated by the user who created the post
 @router.put('/{id_thread}', status_code=status.HTTP_200_OK)
-async def update_thread_post(id_thread: int, data: schemas.DisplayPost, database: Session = Depends(db.connection.get_db)):
+async def update_thread_post(id_thread: int, data: schemas.PostUpdate, database: Session = Depends(db.connection.get_db)):
     thread = database.query(Thread).filter(Thread.id == id_thread).first()
 
     if not thread:

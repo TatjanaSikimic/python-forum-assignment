@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from db.models import Post, Thread, Attachment, User, Comment
-from .schemas import DisplayPost, DisplayAttachment, DisplayPostWithTread
+from .schemas import DisplayPost, DisplayAttachment, DisplayPostWithTread, PostUpdate
 from api.v1.user.schemas import DisplayUser
 
 
@@ -58,23 +58,27 @@ def __get_display_user__(user_id, database):
 
     return display_user
 
+def get_display_post(post_db,database):
+    display_attachments = __get_display_attachments__(post_db.id, database)
+
+    display_user = __get_display_user__(post_db.user_id, database)
+
+    display_post = DisplayPost(title=post_db.title,
+                       dt_created=post_db.dt_created,
+                       dt_updated=post_db.dt_updated,
+                       user=display_user,
+                       content=post_db.content,
+                       attachments=display_attachments)
+    return display_post
+
 
 async def get_posts_by_thread(thread_id, database):
     display_posts = []
     posts_db = database.query(Post).filter(Post.thread_id == thread_id).all()
 
     for post_db in posts_db:
-        display_attachments = __get_display_attachments__(post_db.id, database)
 
-        display_user = __get_display_user__(post_db.user_id, database)
-
-        post = DisplayPost(title=post_db.title,
-                           dt_created=post_db.dt_created,
-                           dt_updated=post_db.dt_updated,
-                           user=display_user,
-                           content=post_db.content,
-                           attachments=display_attachments,
-                           )
+        post = get_display_post(post_db,database)
         display_posts.append(post)
 
     return display_posts
@@ -125,9 +129,23 @@ def delete_post(post,database):
     database.delete(post)
     database.commit()
 
-async def update_post(post:DisplayPost,post_db:Post, thread,database):
-    for key in post.attachments:
-        attachment_to_update = Attachment(path=post.attachments[key])
+
+class UpdatePost:
+    pass
+
+
+async def update_post(post:PostUpdate,post_db:Post, thread,database):
+    # for key in post.attachments:
+    #     attachment_to_update = Attachment(path=post.attachments[key])
+    #     database.add(attachment_to_update)
+    #     database.commit()
+    #     database.refresh(attachment_to_update)
+
+    for attachment in post.attachments:
+        print(attachment.id)
+        attachment_to_update = Attachment(path=attachment.path)
+        if attachment.id:
+            attachment_to_update.id = attachment.id
         database.add(attachment_to_update)
         database.commit()
         database.refresh(attachment_to_update)

@@ -28,7 +28,26 @@ class DisplayPost(BaseModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-class DisplayPostWithTread(BaseModel):
+class DisplayPostWithThread(DisplayPost):
+    thread_title: str
+    thread_dt_created: datetime
+    thread_dt_updated: datetime
+    # title: str
+    # dt_created: datetime
+    # dt_updated: datetime
+    # user: DisplayUser
+    # content: str
+    # attachments: Dict[int,str]
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+class AttachmentUpdate(BaseModel):
+    id: int
+    path: str
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+class PostUpdate(BaseModel):
     thread_title: str
     thread_dt_created: datetime
     thread_dt_updated: datetime
@@ -37,6 +56,6 @@ class DisplayPostWithTread(BaseModel):
     dt_updated: datetime
     user: DisplayUser
     content: str
-    attachments: Dict[int,str]
+    attachments: List[AttachmentUpdate]
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

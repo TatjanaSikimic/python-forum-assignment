@@ -10,6 +10,8 @@ def to_camel(string):
 
 # This should be the base model that is inherited
 class BaseModel(PydanticBaseModel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
     class Config:
         alias_generator = to_camel
         allow_population_by_field_name = True
