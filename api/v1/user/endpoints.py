@@ -58,7 +58,7 @@ def add_user_signature(user_id: int, signature, database: Session = Depends(db.c
     return updated_user
 
 
-@router.put('/signature/{user_id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.put('/signature/{user_id}', status_code=status.HTTP_200_OK)
 def update_user_signature(user_id: int, signature, database: Session = Depends(db.connection.get_db)):
 
     user = database.query(User).filter(User.id == user_id).first()

@@ -31,6 +31,7 @@ def get_thread(id_thread: int, database: Session = Depends(db.connection.get_db)
 
     return DisplayThread(title=thread.title, dt_created=thread.dt_created, dt_updated=thread.dt_updated, user=user)
 
+
 # TODO: Create thread
 @router.post('/', status_code=status.HTTP_201_CREATED)
 async def create_thread(data: schemas.CreateThread, database: Session = Depends(db.connection.get_db)):
@@ -52,7 +53,8 @@ def update_thread(id_thread: int, data: schemas.Thread, database: Session = Depe
     user = database.query(User).filter(User.id == thread.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {thread.user_id} doesn't exist")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"User with id {thread.user_id} doesn't exist")
 
     updated_thread = helpers.update_thread(data, thread, database)
 
@@ -60,13 +62,11 @@ def update_thread(id_thread: int, data: schemas.Thread, database: Session = Depe
 
 
 # TODO: Delete thread, can only be deleted by the user who created it
-@router.delete('/{id_thread}',status_code=status.HTTP_200_OK)
+@router.delete('/{id_thread}', status_code=status.HTTP_200_OK)
 def delete_thread(id_thread: int, database: Session = Depends(db.connection.get_db)):
     thread = database.query(Thread).filter(Thread.id == id_thread).first()
 
     if not thread:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Thread with id {id_thread} doesn't exist")
 
-    database.delete(thread)
-    database.commit()
-
+    helpers.delete_thread(thread, database)

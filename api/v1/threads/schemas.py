@@ -19,6 +19,6 @@ class DisplayThread(BaseModel):
     dt_updated: datetime
     user: DisplayUser
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    # def __init__(self, **kwargs):
+    #     super().__init__(**kwargs)
 
