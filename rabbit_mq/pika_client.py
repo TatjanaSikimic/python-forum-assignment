@@ -1,3 +1,4 @@
+import asyncio
 import json
 import uuid
 # from venv import logger
@@ -11,46 +12,44 @@ import config
 class PikaClient:
 
     def __init__(self, queue_name):
-        self.publish_queue_name = queue_name
-        self.consume_queue_name = queue_name
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host=config.RABBIT_HOST)
-        )
-        self.channel = self.connection.channel()
-        self.publish_queue = self.channel.queue_declare(queue=self.publish_queue_name)
-        self.callback_queue = self.publish_queue.method.queue
-        self.response = None
-        # self.process_callable = process_callable
+        self.queue_name = queue_name
         print('Pika connection initialized')
 
-    async def consume(self):
-        """Setup message listener with the current running loop"""
-        connection = await connect_robust(host=config.RABBIT_HOST,
-                                          port=config.RABBIT_PORT,
-                                          )
-        channel = await connection.channel()
-        queue = await channel.declare_queue(self.consume_queue_name)
-        await queue.consume(self.receive_message, no_ack=False)
-        print('Established pika async listener')
-        return connection
+    def receive_message(self):
+        messages = []
+        parameters = pika.ConnectionParameters(host=config.RABBIT_HOST,
+                                               port=config.RABBIT_PORT)
+        connection = pika.BlockingConnection(parameters)
+        channel = connection.channel()
+        channel.queue_declare(queue=self.queue_name)
 
-    async def receive_message(self, message):
-        await message.ack()
-        body = message.body
-        print('Received message')
-        if body:
-            print(body)
+        method_frame, header_frame, body = channel.basic_get(queue=self.queue_name)
+
+        while body is not None: #method_frame is not None and method_frame.NAME != 'Basic.GetEmpy':
+            method_frame, header_frame, body = channel.basic_get(queue=self.queue_name)
+            if body is None:
+                break
+            messages.append(body)
+        if method_frame is not None and method_frame.NAME != 'Basic.GetEmpy':
+            channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+        connection.close()
+        return messages
 
     def send_message(self, message):
         print(message)
-        self.channel.basic_publish(
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host=config.RABBIT_HOST)
+        )
+        channel = connection.channel()
+        publish_queue = channel.queue_declare(queue=self.queue_name)
+        channel.basic_publish(
             exchange='',
-            routing_key=self.publish_queue_name,
+            routing_key=self.queue_name,
             properties=pika.BasicProperties(
-                reply_to=self.callback_queue,
                 correlation_id=str(uuid.uuid4())
             ),
 
             body=json.dumps(message)
 
         )
+        connection.close()
