@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from api.base.schemas import BaseModel
 from pydantic import validator
 
@@ -14,3 +16,13 @@ class User(BaseModel):
     name: str | None
     avatar: str
     signature: str | None
+
+class SendMessage(BaseModel):
+    content: str
+    user: int
+
+class ReceiveMessage(BaseModel):
+    dt_created: str
+    content: str
+    user: DisplayUser
+

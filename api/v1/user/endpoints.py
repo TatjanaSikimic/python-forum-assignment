@@ -1,12 +1,18 @@
+from typing import List
+
 from fastapi import APIRouter, status, Depends, HTTPException
+
 from . import helpers, schemas
 from sqlalchemy.orm import Session
 import db.connection
 from db.models import User
 from . import helpers
-
+from .schemas import ReceiveMessage
+from rabbit_mq.pika_client_service import get_pika_client
 
 router = APIRouter()
+
+
 
 
 # You can modify these endpoints to your liking, but support avatar update and user signature update
@@ -60,7 +66,6 @@ def add_user_signature(user_id: int, signature, database: Session = Depends(db.c
 
 @router.put('/signature/{user_id}', status_code=status.HTTP_200_OK)
 def update_user_signature(user_id: int, signature, database: Session = Depends(db.connection.get_db)):
-
     user = database.query(User).filter(User.id == user_id).first()
 
     if not user:
@@ -69,6 +74,7 @@ def update_user_signature(user_id: int, signature, database: Session = Depends(d
     updated_user = helpers.add_attr("signature", signature, user, database)
 
     return updated_user
+
 
 @router.delete('/signature/{user_id}', status_code=status.HTTP_200_OK)
 def delete_user_signature(user_id: int, database: Session = Depends(db.connection.get_db)):
@@ -86,15 +92,32 @@ def delete_user_signature(user_id: int, database: Session = Depends(db.connectio
 
 # TODO: Messaging uses RabbitMQ. You can use pika or aio-pika adapter for RabbitMQ, both are included
 
-@router.post('/messaging')
-def send_message_to_user():
+@router.post('/messaging', status_code=status.HTTP_201_CREATED)
+def send_message_to_user(data: schemas.SendMessage, database: Session = Depends(db.connection.get_db)):
     # Message is sent to the amqp service, to user queue
     # If user queue not created, create it, user queues should be named user_{id_user}, e.g. user_1123
-    pass
+    current_user = 9
+
+    user = database.query(User).filter(User.id == data.user).first()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"User with username {user.id} does not exist.")
+    message_to_send = helpers.prepare_message_for_sending(data.content, current_user, database)
+    pika_client = get_pika_client(f"user_{current_user}") ## promijeniti ovo
+    pika_client.send_message(message_to_send.dict())
+    return {"status": "ok"}
 
 
 @router.get('/messaging')
-def receive_messages():
+async def receive_messages():
     # Connect to my user queue, get every message that is in queue, and return it here.
     # For additional challenge, you can permanently store them in-memory, redis or something else
-    pass
+    current_user = 9
+    pika_client = get_pika_client(f"user_{current_user}")
+    message = await pika_client.consume()
+    print("Message:",message)
+
+    # message_to_receive = helpers.prepare_message_for_receiving(message)
+
+    # return message_to_receive

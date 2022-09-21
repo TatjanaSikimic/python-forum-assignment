@@ -152,7 +152,7 @@ async def update_post(post: PostUpdate, post_db: Post, thread, database):
 
         if attachment.id > 0:
             attachment_to_update = database.query(Attachment).filter(Attachment.id == attachment.id).first()
-            attachment_to_update.path=attachment.path
+            attachment_to_update.path = attachment.path
         else:
             attachment_to_update = Attachment(path=attachment.path,
                                               post_id=post_db.id)
