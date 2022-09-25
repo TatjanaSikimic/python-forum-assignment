@@ -8,7 +8,6 @@ from ..user.schemas import DisplayUser
 
 
 async def add_new_thread(data, current_user_id, database):
-    ### dodati autorizaciju za sve funkcije
     date_created = date_updated = datetime.datetime.now(datetime.timezone.utc)  # datetime.utcnow()
     new_thread = Thread(title=data.title, dt_created=date_created, dt_updated=date_updated, user_id=current_user_id)
 
@@ -17,21 +16,6 @@ async def add_new_thread(data, current_user_id, database):
     database.refresh(new_thread)
     return new_thread
 
-
-# async def get_thread(thread,database):
-#     # print('aaaaa')
-#     # results = (database.query(User)
-#     #            .join(Thread, Thread.user_id == User.id)
-#     #            .values(Thread.title,
-#     #                    Thread.dt_created,
-#     #                    Thread.dt_updated,
-#     #                    User.username,
-#     #                    User.avatar,
-#     #                    User.signature))
-#     user = database.query()
-#     user = ThreadUser(username=results['username'],avatar=results['avatar'],signature=results['signature'])
-#     thread = DisplayThread(title=results['title'],dt_created=results['dt_created'],dt_updated=results['dt_updated'],user=user)
-#     return thread
 
 def get_all_threads(database):
     display_threads = []
@@ -70,7 +54,9 @@ def update_thread(thread: schemas.Thread, db_thread: Thread, database):
 
 def delete_thread(thread, database):
     posts = database.query(Post).filter(Post.thread_id == thread.id).all()
-    [database.delete(post) for post in posts]
+    # [database.delete(post) for post in posts]
+    for post in posts:
+        database.delete(post)
     database.commit()
 
     database.delete(thread)

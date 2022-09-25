@@ -3,7 +3,7 @@ from api.v1.user.schemas import DisplayUser
 import api.v1.posts.helpers as post_helpers
 from .schemas import DisplayComment, DisplayCommentWithPost, DisplayCommentWithThread, CommentUpdate
 import datetime
-from db.models import Comment, Thread, Post, Attachment, User
+from db.models import Comment, Thread, Post, User
 
 
 async def create_comment(comment, post, user_id, database):
@@ -32,26 +32,16 @@ async def create_comment(comment, post, user_id, database):
     database.refresh(comment_to_create)
     return comment_to_create
 
-
-def __convert_attachments_to_dict__(attachments):
-    dict = {}
-    for attachment in attachments:
-        dict[attachment.id] = attachment.path
-    return dict
-
-
 async def get_user_comments(user_id, database):
-    print('aaa')
     comments_db = database.query(Comment).filter(Comment.user_id == user_id).all()
     comments_to_display = []
     for comment in comments_db:
-        print("comment")
         post_db = database.query(Post).filter(Post.id == comment.post_id).first()
         print(post_db)
 
         display_post = post_helpers.get_display_post(post_db, database)
 
-        comment_user = __get_display_user__(comment.user_id, database)
+        comment_user = get_display_user(comment.user_id, database)
         comment_to_display = DisplayCommentWithPost(post=display_post,
                                                     title=comment.title,
                                                     dt_created=comment.dt_created,
@@ -63,7 +53,7 @@ async def get_user_comments(user_id, database):
     return comments_to_display
 
 
-def __get_display_user__(user_id, database):
+def get_display_user(user_id, database):
     user_db = database.query(User).filter(User.id == user_id).first()
 
     display_user = DisplayUser(username=user_db.username,
@@ -73,31 +63,41 @@ def __get_display_user__(user_id, database):
 
 
 async def get_post_comments(post_id, database):
-    comments_db = database.query(Comment).filter(Comment.post_id == post_id).all()
-    print(len(comments_db))
+    results = database.query(User, Comment) \
+        .join(Comment) \
+        .where(Comment.post_id == post_id) \
+        .values(User.username,
+                User.avatar,
+                User.signature,
+                Comment.title,
+                Comment.dt_created,
+                Comment.dt_updated,
+                Comment.content) \
+
     comments_to_display = []
 
-    for comment in comments_db:
-        display_user = __get_display_user__(comment.user_id, database)
+    for result in results:
 
-        display_comment = DisplayComment(title=comment.title,
-                                         dt_created=comment.dt_created,
-                                         dt_updated=comment.dt_updated,
+        display_user = DisplayUser(username=result.username,
+                                   avatar=result.avatar,
+                                   signature=result.signature)
+        display_comment = DisplayComment(title=result.title,
+                                         dt_created=result.dt_created,
+                                         dt_updated=result.dt_updated,
                                          user=display_user,
-                                         content=comment.content)
-        print(display_comment)
+                                         content=result.content)
         comments_to_display.append(display_comment)
 
     return comments_to_display
 
 
 async def get_comment_info(comment_db, database):
-    print("a:",comment_db.post_id)
+
     post_db = database.query(Post).filter(Post.id == comment_db.post_id).first()
     post_with_thread = await post_helpers.get_post_by_id(post_db, database)
-    print("b:",post_with_thread.title)
-    user = __get_display_user__(comment_db.user_id, database)
-    print(user)
+
+    user = get_display_user(comment_db.user_id, database)
+
     comment_to_display = DisplayCommentWithThread(post=post_with_thread,
                                                   title=comment_db.title,
                                                   dt_created=post_db.dt_created,

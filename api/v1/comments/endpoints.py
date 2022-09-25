@@ -9,7 +9,6 @@ from db.models import Post, Comment
 from . import helpers, schemas
 from .schemas import DisplayComment, DisplayCommentWithPost
 from ..auth.jwt import get_current_user
-
 router = APIRouter()
 
 
@@ -35,6 +34,7 @@ async def get_post_comments(id_post: int,
                             params: Params = Depends(),
                             database: Session = Depends(db.connection.get_db)):
     post = database.query(Post).filter(Post.id == id_post).first()
+    print(post)
 
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
