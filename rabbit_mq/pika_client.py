@@ -25,18 +25,16 @@ class PikaClient:
 
         method_frame, header_frame, body = channel.basic_get(queue=self.queue_name)
 
-        while body is not None: #method_frame is not None and method_frame.NAME != 'Basic.GetEmpy':
+        while method_frame is not None and method_frame.NAME != 'Basic.GetEmpy':
             method_frame, header_frame, body = channel.basic_get(queue=self.queue_name)
-            if body is None:
-                break
-            messages.append(body)
+            if body is not None:
+                messages.append(body)
         if method_frame is not None and method_frame.NAME != 'Basic.GetEmpy':
             channel.basic_ack(delivery_tag=method_frame.delivery_tag)
         connection.close()
         return messages
 
     def send_message(self, message):
-        print(message)
         connection = pika.BlockingConnection(
             pika.ConnectionParameters(host=config.RABBIT_HOST)
         )

@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 import db.connection
 from db.models import Thread, User
 from .schemas import DisplayThread
-from ..auth.schemas import TokenData
 from ..auth.jwt import get_current_user
+from ..auth.schemas import TokenData
+
 from . import schemas
 
 router = APIRouter()
@@ -44,11 +45,19 @@ async def create_thread(data: schemas.CreateThread, database: Session = Depends(
 
 # TODO: Update thread, can only be updated by the user who created it
 @router.put('/{id_thread}', status_code=status.HTTP_200_OK)
-def update_thread(id_thread: int, data: schemas.Thread, database: Session = Depends(db.connection.get_db)):
+def update_thread(id_thread: int, data: schemas.Thread, database: Session = Depends(db.connection.get_db),
+                  current_user: User = Depends(get_current_user)):
+    current_user_id = int(current_user['sub'])
+    print(current_user_id)
+
     thread = database.query(Thread).filter(Thread.id == id_thread).first()
 
     if not thread:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Thread with id {id_thread} doesn't exist")
+
+    if current_user_id != thread.user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Thread can only be updated by the user who created it")
     # In case someone sends the non-existent user id
     user = database.query(User).filter(User.id == thread.user_id).first()
 
@@ -63,10 +72,19 @@ def update_thread(id_thread: int, data: schemas.Thread, database: Session = Depe
 
 # TODO: Delete thread, can only be deleted by the user who created it
 @router.delete('/{id_thread}', status_code=status.HTTP_200_OK)
-def delete_thread(id_thread: int, database: Session = Depends(db.connection.get_db)):
+def delete_thread(id_thread: int,
+                  database: Session = Depends(db.connection.get_db),
+                  current_user=Depends(get_current_user)):
+    current_user_id = int(current_user['sub'])
+    print(current_user_id)
+
     thread = database.query(Thread).filter(Thread.id == id_thread).first()
 
     if not thread:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Thread with id {id_thread} doesn't exist")
+
+    if thread.user_ide != current_user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Thread can only be deleted by the user who created it")
 
     helpers.delete_thread(thread, database)

@@ -4,11 +4,12 @@ from db.models import Thread, User, Post
 import datetime
 from . import schemas
 from api.v1.posts.helpers import delete_post
+from ..user.schemas import DisplayUser
 
 
 async def add_new_thread(data, current_user_id, database):
     ### dodati autorizaciju za sve funkcije
-    date_created = date_updated = datetime.datetime.now(datetime.timezone.utc)#datetime.utcnow()
+    date_created = date_updated = datetime.datetime.now(datetime.timezone.utc)  # datetime.utcnow()
     new_thread = Thread(title=data.title, dt_created=date_created, dt_updated=date_updated, user_id=current_user_id)
 
     database.add(new_thread)
@@ -33,14 +34,26 @@ async def add_new_thread(data, current_user_id, database):
 #     return thread
 
 def get_all_threads(database):
-    threads = database.query(Thread).all()
     display_threads = []
-    for thread in threads:
-        user = database.query(User).filter(User.id == thread.user_id).first()
+    results = (database.query(User)
+               .join(Thread)
+               .values(User.username,
+                       User.avatar,
+                       User.signature,
+                       Thread.title,
+                       Thread.dt_created,
+                       Thread.dt_updated))
+
+    for thread in results:
+        print(thread.title)
+        user = DisplayUser(username=thread.username,
+                           avatar=thread.avatar,
+                           signature=thread.signature)
         display_threads.append(DisplayThread(title=thread.title,
                                              dt_created=thread.dt_created,
                                              dt_updated=thread.dt_updated,
                                              user=user))
+
     return display_threads
 
 
@@ -54,12 +67,11 @@ def update_thread(thread: schemas.Thread, db_thread: Thread, database):
 
     return db_thread
 
-def delete_thread(thread,database):
+
+def delete_thread(thread, database):
     posts = database.query(Post).filter(Post.thread_id == thread.id).all()
     [database.delete(post) for post in posts]
     database.commit()
 
     database.delete(thread)
     database.commit()
-
-

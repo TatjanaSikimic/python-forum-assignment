@@ -14,7 +14,7 @@ class User(BaseModel):
     username: str
     password: str
     name: str | None
-    avatar: str
+    avatar: str | None
     signature: str | None
 
 class SendMessage(BaseModel):

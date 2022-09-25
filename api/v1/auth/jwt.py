@@ -1,19 +1,61 @@
+import time
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
-from . import schemas
+# from datetime import datetime, timedelta
+import datetime
+from pydantic import ValidationError
 
-SECRET_KEY = "JuIXoB2b8GMXPkaaawlROw6sG4v7uCVUJZVCxbjk42Y24eql7Sqvg2/ggdkmlicSPCmzjczbU3H3uncMDY9NF95eS0S6PFesHOqH7I9sX3daK+9rhLGdWVQNt450O7Ae6HkHfW9hDtOLQKrP2uJb6fNEos4ttYVTioA9PFsiZEzDodOlpjGP52/74R2C6kfllDXEQjd0MTq1ZwBs3NsDLPBYYps9XSL6yhUSLegv2fJxj1JuTijmdhayzuu7j4PK6iqJixXqmx1+ZDUmVbI7cMGs4G+muvWdJ7zSAHZNRktwXoMzBRN5j4csa4tNNpqW2+QPYaBrAzDTSc/bl+j8QQ=="
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+import config
+from . import schemas
+from .jwt_bearer import OAuth2PasswordBearerWithCookie
+from .schemas import TokenData
+
+SECRET_KEY = config.JWT_SECRET_KEY
+ALGORITHM = config.JWT_ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = config.SESSION_EXPIRE
+
+
+def token_response(token: str):
+    return {
+        "access_token": token
+    }
+
+
+def sign_JWT(user_id: str):
+    print("user_id")
+    created = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+    expire_date = int((datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp())
+    payload = {
+        "sub": user_id,
+        "iat": created,
+        "exp": expire_date
+    }
+    encoded_jwt = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return token_response(encoded_jwt)
+
+
+def decode_JWT_token(token: str):
+    # try:
+        print("Decode:",token)
+        print("Key:",ALGORITHM)
+        decoded_token = jwt.decode(token, SECRET_KEY, ALGORITHM)
+        print("decoded:",decoded_token)
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        return decoded_token if decoded_token['exp'] >= int(current_time.timestamp()) else None
+    # except:
+    #     print("exc")
+    #     raise {}
+
 
 def create_access_token(data: dict):
     to_encode = data.copy()
-    created = datetime.utcnow().timestamp()
-    created = int(created)
+    print("To encode:", to_encode)
+    created = datetime.datetime.now(datetime.timezone.utc)
+    created = int(created.timestamp())
 
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     expire = int(expire.timestamp())
 
@@ -23,24 +65,40 @@ def create_access_token(data: dict):
 
     return encoded_jwt
 
+
 def verify_token(token: str, credentials_exception):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print("Token:", token.strip())
+        payload = decode_JWT_token(token)
+        print("Payload:",payload)
+        token_data = None
         user_id: str = payload.get("sub")
-        print(user_id)
+
+
+        # token_data = schemas.TokenData(id=user_id)
+        if not payload:
+            print("exception")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token expired",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         if user_id is None:
             raise credentials_exception
-        token_data = schemas.TokenData(id=id)
-        return token_data
+        return payload
     except JWTError:
         raise credentials_exception
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-def get_current_user(data: str = Depends(oauth2_scheme)):
+oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="login/")
+
+
+async def get_current_user(data = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials.",
         headers={"WWW=Authenticate": "Bearer"}
     )
+
     return verify_token(data, credentials_exception)
+

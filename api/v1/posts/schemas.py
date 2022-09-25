@@ -1,14 +1,14 @@
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 from datetime import datetime
 
-from pydantic import Field
+from pydantic import Field, constr
 from api.v1.user.schemas import DisplayUser
 from api.base.schemas import BaseModel
 
 
 class PostBase(BaseModel):
     title: str
-    content: str
+    content: Optional[constr(min_length=50)]
 
 
 class Attachment(BaseModel):

@@ -7,9 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import db.connection
 from db.models import Thread, Post, User
+from ..auth.jwt import get_current_user
 
 from ..auth.schemas import TokenData
-from ..auth.jwt import get_current_user
+
 from . import schemas
 
 router = APIRouter()
@@ -21,8 +22,11 @@ add_pagination(router)
 # TODO: Add configurable pagination
 # User needs to be logged in for this endpoint to function
 @router.get('/posts/', response_model=Page[schemas.DisplayPostWithThread])
-async def get_user_posts(user_id: int, params: Params = Depends(), database: Session = Depends(db.connection.get_db)):
+async def get_user_posts(user_id: int, params: Params = Depends(), database: Session = Depends(db.connection.get_db), \
+                         current_user: User = Depends(get_current_user)):
     ### dodati limit
+    current_user_id = int(current_user['sub'])
+    print(current_user_id)
     user = database.query(User).filter(User.id == user_id).first()
 
     if not user:
@@ -64,13 +68,16 @@ async def get_post_by_id(id_post: int, database: Session = Depends(db.connection
 # TODO: Create post for the thread with specific ID
 @router.post('/{id_thread}', status_code=status.HTTP_201_CREATED)
 async def create_thread_post(id_thread: int, data: schemas.PostCreate,
-                             database: Session = Depends(db.connection.get_db)):
+                             database: Session = Depends(db.connection.get_db),
+                             current_user: User = Depends(get_current_user)):
+    current_user_id = int(current_user['sub'])
+    print(current_user_id)
     thread = database.query(Thread).filter(Thread.id == id_thread).first()
 
     if not thread:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Thread with id {id_thread} does not exists")
-    new_post = await helpers.create_post(data, 9, thread, database)
+    new_post = await helpers.create_post(data, current_user_id, thread, database)
 
     return new_post
 
@@ -79,8 +86,10 @@ async def create_thread_post(id_thread: int, data: schemas.PostCreate,
 # Can only be updated by the user who created the post
 @router.put('/post/{id_thread}', status_code=status.HTTP_200_OK)
 async def update_thread_post(id_thread: int, data: schemas.PostUpdate,
-                             database: Session = Depends(db.connection.get_db)):
-    print("ababab")
+                             database: Session = Depends(db.connection.get_db),
+                             current_user=Depends(get_current_user)):
+    current_user_id = int(current_user['sub'])
+    print(current_user_id)
     thread = database.query(Thread).filter(Thread.id == id_thread).first()
 
     if not thread:
@@ -91,6 +100,9 @@ async def update_thread_post(id_thread: int, data: schemas.PostUpdate,
     if not post_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id {data.id} does not exist")
+    if post_db.user_id != current_user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Post can be only updated by the user who created the post.")
 
     updated_post = await helpers.update_post(data, post_db, thread, database)
     return updated_post
@@ -99,11 +111,18 @@ async def update_thread_post(id_thread: int, data: schemas.PostUpdate,
 # TODO: Delete post for the thread with specific ID
 # Can only be deleted by the user who created the post
 @router.delete('/post/{id_post}')
-def delete_post_by_id(id_post: int, database: Session = Depends(db.connection.get_db)):
+def delete_post_by_id(id_post: int, database: Session = Depends(db.connection.get_db),
+                      current_user=Depends(get_current_user)):
+    current_user_id = int(current_user['sub'])
+    print(current_user_id)
     post = database.query(Post).filter(Post.id == id_post).first()
 
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id {id_post} does not exist")
+
+    if post.user_id != current_user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Post can only be deleted by the user who created it.")
 
     helpers.delete_post(post, database)
