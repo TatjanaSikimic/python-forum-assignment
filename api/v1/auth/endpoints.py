@@ -5,16 +5,19 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from fastapi.responses import RedirectResponse
 
+import config
 import db.connection
 from . import schemas, validator, helpers
 from db.models import User
 
-from .jwt import sign_JWT, create_access_token, get_current_user
-from .jwt_bearer import JWTBearer
+from .jwt import sign_JWT, create_access_token #get_current_user
+import api.middlewares.auth_middleware as middleware
 from .schemas import TokenData, UserLogin
-from api.middlewares.auth_middleware import add_process_time_header
+# from api.middlewares.auth_middleware import add_process_time_header
+import api.dependencies.dependancies as dependancies
 
 router = APIRouter()
+token_url = config.TOKEN_URL
 
 
 @router.post('/register', status_code=status.HTTP_201_CREATED)
@@ -42,13 +45,13 @@ async def register_user(data: schemas.UserRegistration, database: Session = Depe
 #     return "ok"
 
 @router.get('/me')
-async def get_me(current_user: User = Depends(get_current_user)):
+async def get_me(current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     print(current_user)
     print(current_user['sub'])
     return "ok"
 
 
-@router.post('/login')
+@router.post('/login', status_code=status.HTTP_200_OK)
 def login_user(response: Response, request: OAuth2PasswordRequestForm = Depends(),
                database: Session = Depends(db.connection.get_db)):
     user = database.query(User).filter(User.username == request.username).first()
@@ -80,8 +83,7 @@ def login_user(response: Response, request: OAuth2PasswordRequestForm = Depends(
 
 
 # TODO: Add mechanism for logout described in README
-@router.post('/logout')
-def logout_user(response: Response, current_user: User = Depends(get_current_user)):
-    print('logging out')
+@router.post('/logout', status_code=status.HTTP_200_OK)
+def logout_user(response: Response, current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     response.delete_cookie(key='auth_token')
     return "User logged out."

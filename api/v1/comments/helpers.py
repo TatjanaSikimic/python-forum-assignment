@@ -32,12 +32,12 @@ async def create_comment(comment, post, user_id, database):
     database.refresh(comment_to_create)
     return comment_to_create
 
+
 async def get_user_comments(user_id, database):
     comments_db = database.query(Comment).filter(Comment.user_id == user_id).all()
     comments_to_display = []
     for comment in comments_db:
         post_db = database.query(Post).filter(Post.id == comment.post_id).first()
-        print(post_db)
 
         display_post = post_helpers.get_display_post(post_db, database)
 
@@ -77,7 +77,6 @@ async def get_post_comments(post_id, database):
     comments_to_display = []
 
     for result in results:
-
         display_user = DisplayUser(username=result.username,
                                    avatar=result.avatar,
                                    signature=result.signature)
@@ -92,7 +91,6 @@ async def get_post_comments(post_id, database):
 
 
 async def get_comment_info(comment_db, database):
-
     post_db = database.query(Post).filter(Post.id == comment_db.post_id).first()
     post_with_thread = await post_helpers.get_post_by_id(post_db, database)
 

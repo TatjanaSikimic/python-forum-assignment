@@ -2,12 +2,18 @@ version: "3.5"
 # TODO: Modify every service so it uses proper images, proper networking etc.
 services:
   postgresql:
-    image: dummy_image
+    image: postgres
+    volumes:
+      - postgres-data:/var/lib/posgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: python-forum-assignment
     networks:
       - assigment_network
 
   rabbitmq:
-    image: dummy_image
+    image: rabbitmq
     networks:
       - assigment_network
 
@@ -15,6 +21,7 @@ services:
     # Does not use preexisting image, it should be built using Dockerfile.app
     build:
       context: .
+      dockerfile: Dockerfile.app
     networks:
       - assigment_network
 
@@ -22,19 +29,22 @@ services:
     # Optional, initialization can also be done through app build
     build:
       context: .
+      dockerfile: Dockerfile.init
     networks:
       - assigment_network
 
   # Optional, for every new service, a docker-compose service should be added
   redis:
-    image: dummy_image
+    image: redis
     restart: always
     networks:
       - assigment_network
 
 networks:
   assigment_network:
-    external: true
+    external: false
     name: assigment_network
 
+volumes:
+  postgres-data:
 

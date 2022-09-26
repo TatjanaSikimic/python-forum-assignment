@@ -1,27 +1,32 @@
 from typing import List
 
+import config
 from . import helpers
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import db.connection
 from db.models import Thread, User
 from .schemas import DisplayThread
-from ..auth.jwt import get_current_user
+# from ..auth.jwt import get_current_user
+# from api.middlewares.auth_middleware import get_current_user
+import api.middlewares.auth_middleware as middleware
 from ..auth.schemas import TokenData
 
 from . import schemas
 
 router = APIRouter()
 
+token_url = config.TOKEN_URL
+
 
 # TODO: Retrieve all threads that exist in the application
-@router.get('/', response_model=List[DisplayThread])
+@router.get('/', response_model=List[DisplayThread], status_code=status.HTTP_200_OK)
 def get_threads(database: Session = Depends(db.connection.get_db)):
     return helpers.get_all_threads(database)
 
 
 # TODO: Retrieve single thread by ID
-@router.get('/{id_thread}', response_model=DisplayThread)
+@router.get('/{id_thread}', response_model=DisplayThread, status_code=status.HTTP_200_OK)
 def get_thread(id_thread: int, database: Session = Depends(db.connection.get_db)):
     thread = database.query(Thread).filter(Thread.id == id_thread).first()
 
@@ -35,18 +40,22 @@ def get_thread(id_thread: int, database: Session = Depends(db.connection.get_db)
 
 # TODO: Create thread
 @router.post('/', status_code=status.HTTP_201_CREATED)
-async def create_thread(data: schemas.CreateThread, database: Session = Depends(db.connection.get_db)):
+async def create_thread(data: schemas.CreateThread,
+                        database: Session = Depends(db.connection.get_db),
+                        current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     if data.title is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty title not allowed!")
+    current_user_id = int(current_user['sub'])
+    print(current_user_id)
 
-    thread = await helpers.add_new_thread(data, 9, database)
+    thread = await helpers.add_new_thread(data, current_user_id, database)
     return thread
 
 
 # TODO: Update thread, can only be updated by the user who created it
 @router.put('/{id_thread}', status_code=status.HTTP_200_OK)
 def update_thread(id_thread: int, data: schemas.Thread, database: Session = Depends(db.connection.get_db),
-                  current_user: User = Depends(get_current_user)):
+                  current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
     print(current_user_id)
 
@@ -74,7 +83,7 @@ def update_thread(id_thread: int, data: schemas.Thread, database: Session = Depe
 @router.delete('/{id_thread}', status_code=status.HTTP_200_OK)
 def delete_thread(id_thread: int,
                   database: Session = Depends(db.connection.get_db),
-                  current_user=Depends(get_current_user)):
+                  current_user=Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
     print(current_user_id)
 
@@ -83,7 +92,7 @@ def delete_thread(id_thread: int,
     if not thread:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Thread with id {id_thread} doesn't exist")
 
-    if thread.user_ide != current_user_id:
+    if thread.user_id != current_user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Thread can only be deleted by the user who created it")
 

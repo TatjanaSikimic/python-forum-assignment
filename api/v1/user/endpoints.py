@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import APIRouter, status, Depends, HTTPException
 
+import config
 from . import helpers, schemas
 from sqlalchemy.orm import Session
 import db.connection
@@ -9,10 +10,12 @@ from db.models import User
 from . import helpers
 from .schemas import ReceiveMessage
 from rabbit_mq.pika_client_service import get_pika_client
-from ..auth.jwt import get_current_user
+# from ..auth.jwt import get_current_user
+import api.middlewares.auth_middleware as middleware
+
 
 router = APIRouter()
-
+token_url = config.TOKEN_URL
 
 # You can modify these endpoints to your liking, but support avatar update and user signature update
 # If the user is not logged in, none of these endpoints should work
@@ -22,7 +25,7 @@ router = APIRouter()
 
 @router.post('/avatar/{user_id}', response_model=schemas.User, status_code=status.HTTP_201_CREATED, )
 def add_user_avatar(user_id: int, avatar_link, database: Session = Depends(db.connection.get_db),\
-                    current_user: User = Depends(get_current_user)):
+                    current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     # static image, should be saved, and can be retrieved as link
     current_user_id = int(current_user['sub'])
     print(current_user_id)
@@ -46,7 +49,8 @@ def add_user_avatar(user_id: int, avatar_link, database: Session = Depends(db.co
 
 
 @router.delete('/avatar/{user_id}', status_code=status.HTTP_200_OK)
-def delete_avatar(user_id: int, database: Session = Depends(db.connection.get_db),current_user: User = Depends(get_current_user)):
+def delete_avatar(user_id: int, database: Session = Depends(db.connection.get_db),
+                  current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
     print(current_user_id)
 
@@ -66,7 +70,9 @@ def delete_avatar(user_id: int, database: Session = Depends(db.connection.get_db
 
 
 @router.post('/signature/{user_id}', response_model=schemas.User, status_code=status.HTTP_201_CREATED)
-def add_user_signature(user_id: int, signature, database: Session = Depends(db.connection.get_db),current_user: User = Depends(get_current_user)):
+def add_user_signature(user_id: int, signature,
+                       database: Session = Depends(db.connection.get_db),
+                       current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
     print(current_user_id)
 
@@ -89,7 +95,8 @@ def add_user_signature(user_id: int, signature, database: Session = Depends(db.c
 
 
 @router.put('/signature/{user_id}', status_code=status.HTTP_200_OK)
-def update_user_signature(user_id: int, signature, database: Session = Depends(db.connection.get_db),current_user: User = Depends(get_current_user)):
+def update_user_signature(user_id: int, signature, database: Session = Depends(db.connection.get_db),
+                          current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
     print(current_user_id)
 
@@ -107,7 +114,9 @@ def update_user_signature(user_id: int, signature, database: Session = Depends(d
 
 
 @router.delete('/signature/{user_id}', status_code=status.HTTP_200_OK)
-def delete_user_signature(user_id: int, database: Session = Depends(db.connection.get_db), current_user: User = Depends(get_current_user)):
+def delete_user_signature(user_id: int,
+                          database: Session = Depends(db.connection.get_db),
+                          current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
     print(current_user_id)
 
@@ -130,7 +139,7 @@ def delete_user_signature(user_id: int, database: Session = Depends(db.connectio
 
 @router.post('/messaging', status_code=status.HTTP_201_CREATED)
 async def send_message_to_user(data: schemas.SendMessage, database: Session = Depends(db.connection.get_db),\
-                               current_user: User = Depends(get_current_user)):
+                               current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     # Message is sent to the amqp service, to user queue
     # If user queue not created, create it, user queues should be named user_{id_user}, e.g. user_1123
     current_user_id = int(current_user['sub'])
@@ -148,7 +157,7 @@ async def send_message_to_user(data: schemas.SendMessage, database: Session = De
 
 
 @router.get('/messaging', response_model=List[ReceiveMessage])
-async def receive_messages(current_user: User = Depends(get_current_user)):
+async def receive_messages(current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     # Connect to my user queue, get every message that is in queue, and return it here.
     # For additional challenge, you can permanently store them in-memory, redis or something else
     current_user_id = int(current_user['sub'])

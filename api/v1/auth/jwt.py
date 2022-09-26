@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 import config
 from . import schemas
-from .jwt_bearer import OAuth2PasswordBearerWithCookie
+# from .jwt_bearer import OAuth2PasswordBearerWithCookie
 from .schemas import TokenData
 
 SECRET_KEY = config.JWT_SECRET_KEY
@@ -89,16 +89,15 @@ def verify_token(token: str, credentials_exception):
     except JWTError:
         raise credentials_exception
 
-
-oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="login/")
-
-
-async def get_current_user(data = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials.",
-        headers={"WWW=Authenticate": "Bearer"}
-    )
-
-    return verify_token(data, credentials_exception)
+#
+# oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="login/")
+#
+# async def get_current_user(data = Depends(oauth2_scheme)):
+#     credentials_exception = HTTPException(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         detail="Could not validate credentials.",
+#         headers={"WWW=Authenticate": "Bearer"}
+#     )
+#
+#     return verify_token(data, credentials_exception)
 

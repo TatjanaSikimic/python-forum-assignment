@@ -4,13 +4,17 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_pagination import Params, Page, paginate
 from sqlalchemy.orm import Session
 
+import config
 import db
 from db.models import Post, Comment
 from . import helpers, schemas
 from .schemas import DisplayComment, DisplayCommentWithPost
-from ..auth.jwt import get_current_user
+# from ..auth.jwt import get_current_user
+# from api.middlewares.auth_middleware import get_current_user
+import api.middlewares.auth_middleware as middleware
+import api.dependencies.dependancies as dependancies
 router = APIRouter()
-
+token_url = config.TOKEN_URL
 
 # TODO: Retrieve all comments that user created
 # TODO: Include post information for that specific comment
@@ -19,7 +23,7 @@ router = APIRouter()
 @router.get('/comments/', response_model=Page[DisplayCommentWithPost])
 async def get_user_comments(params: Params = Depends(),
                             database: Session = Depends(db.connection.get_db),
-                            current_user=Depends(get_current_user)):
+                            current_user=Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
     print(current_user_id)
     print(current_user_id)
@@ -64,7 +68,7 @@ async def get_comment_by_id(id_comment: int, database: Session = Depends(db.conn
 async def create_post_comment(id_post: int,
                               data: schemas.BaseComment,
                               database: Session = Depends(db.connection.get_db),
-                              current_user=Depends(get_current_user)):
+                              current_user=Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
     print(current_user_id)
     post = database.query(Post).filter(Post.id == id_post).first()
@@ -84,7 +88,7 @@ async def create_post_comment(id_post: int,
 def update_post_comment(id_comment: int,
                         data: schemas.CommentUpdate,
                         database: Session = Depends(db.connection.get_db),
-                        current_user=Depends(get_current_user)):
+                        current_user=Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
     print(current_user_id)
 
@@ -107,7 +111,7 @@ def update_post_comment(id_comment: int,
 @router.delete('/comments/{id_comment}', status_code=status.HTTP_200_OK)
 def delete_post_comment(id_comment: int,
                         database: Session = Depends(db.connection.get_db),
-                        current_user = Depends(get_current_user)):
+                        current_user = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
     print(current_user_id)
     comment = database.query(Comment).filter(Comment.id == id_comment).first()

@@ -20,13 +20,19 @@ async def add_new_thread(data, current_user_id, database):
 def get_all_threads(database):
     display_threads = []
     results = (database.query(User)
-               .join(Thread)
-               .values(User.username,
+               .with_entities(User.username,
                        User.avatar,
                        User.signature,
                        Thread.title,
                        Thread.dt_created,
-                       Thread.dt_updated))
+                       Thread.dt_updated)
+               .join(Thread))
+               # .values(User.username,
+               #         User.avatar,
+               #         User.signature,
+               #         Thread.title,
+               #         Thread.dt_created,
+               #         Thread.dt_updated))
 
     for thread in results:
         print(thread.title)
@@ -45,6 +51,7 @@ def update_thread(thread: schemas.Thread, db_thread: Thread, database):
     for var, value in vars(thread).items():
         setattr(db_thread, var, value) if value else None
     db_thread.dt_updated = datetime.datetime.now(datetime.timezone.utc)
+    print(db_thread)
     database.add(db_thread)
     database.commit()
     database.refresh(db_thread)
@@ -54,7 +61,6 @@ def update_thread(thread: schemas.Thread, db_thread: Thread, database):
 
 def delete_thread(thread, database):
     posts = database.query(Post).filter(Post.thread_id == thread.id).all()
-    # [database.delete(post) for post in posts]
     for post in posts:
         database.delete(post)
     database.commit()
