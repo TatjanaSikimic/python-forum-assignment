@@ -1,11 +1,6 @@
-import asyncio
 import json
 import uuid
-# from venv import logger
-
 import pika
-from aio_pika import connect_robust
-
 import config
 
 
@@ -13,7 +8,6 @@ class PikaClient:
 
     def __init__(self, queue_name):
         self.queue_name = queue_name
-        print('Pika connection initialized')
 
     def receive_message(self):
         messages = []

@@ -1,23 +1,17 @@
-from fastapi import APIRouter
 from fastapi_pagination import Page, paginate, add_pagination, Params
-
-from . import helpers, schemas
-from typing import List
+from . import helpers
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import db.connection
 from db.models import Thread, Post, User
-# from ..auth.jwt import get_current_user
-# from api.middlewares.auth_middleware import get_current_user
 import api.middlewares.auth_middleware as middleware
 import config
-from ..auth.schemas import TokenData
-
 from . import schemas
 
 router = APIRouter()
 add_pagination(router)
 token_url = config.TOKEN_URL
+
 
 # TODO: Retrieve all posts that user created
 # TODO: Include thread information for that specific post
@@ -27,9 +21,8 @@ token_url = config.TOKEN_URL
 async def get_user_posts(user_id: int, params: Params = Depends(),
                          database: Session = Depends(db.connection.get_db),
                          current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
-    ### dodati limit
     current_user_id = int(current_user['sub'])
-    print(current_user_id)
+
     user = database.query(User).filter(User.id == user_id).first()
 
     if not user:
@@ -50,7 +43,7 @@ async def get_thread_post_listing(id_thread: int, params: Params = Depends(),
     if not thread:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Thread with id {id_thread} does not exist.")
-    print(thread.id)
+
     posts = await helpers.get_posts_by_thread(id_thread, database)
     return paginate(posts, params)
 
@@ -72,9 +65,10 @@ async def get_post_by_id(id_post: int, database: Session = Depends(db.connection
 @router.post('/{id_thread}', status_code=status.HTTP_201_CREATED)
 async def create_thread_post(id_thread: int, data: schemas.PostCreate,
                              database: Session = Depends(db.connection.get_db),
-                             current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
+                             current_user: User = Depends(
+                                 middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
-    print(current_user_id)
+
     thread = database.query(Thread).filter(Thread.id == id_thread).first()
 
     if not thread:
@@ -92,7 +86,7 @@ async def update_thread_post(id_thread: int, data: schemas.PostUpdate,
                              database: Session = Depends(db.connection.get_db),
                              current_user=Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
-    print(current_user_id)
+
     thread = database.query(Thread).filter(Thread.id == id_thread).first()
 
     if not thread:
@@ -117,7 +111,7 @@ async def update_thread_post(id_thread: int, data: schemas.PostUpdate,
 def delete_post_by_id(id_post: int, database: Session = Depends(db.connection.get_db),
                       current_user=Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
-    print(current_user_id)
+
     post = database.query(Post).filter(Post.id == id_post).first()
 
     if not post:

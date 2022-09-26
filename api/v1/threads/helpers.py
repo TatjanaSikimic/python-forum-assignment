@@ -1,9 +1,7 @@
 from api.v1.threads.schemas import DisplayThread
 from db.models import Thread, User, Post
-# from datetime import datetime
 import datetime
 from . import schemas
-from api.v1.posts.helpers import delete_post
 from ..user.schemas import DisplayUser
 
 
@@ -21,21 +19,14 @@ def get_all_threads(database):
     display_threads = []
     results = (database.query(User)
                .with_entities(User.username,
-                       User.avatar,
-                       User.signature,
-                       Thread.title,
-                       Thread.dt_created,
-                       Thread.dt_updated)
+                              User.avatar,
+                              User.signature,
+                              Thread.title,
+                              Thread.dt_created,
+                              Thread.dt_updated)
                .join(Thread))
-               # .values(User.username,
-               #         User.avatar,
-               #         User.signature,
-               #         Thread.title,
-               #         Thread.dt_created,
-               #         Thread.dt_updated))
 
     for thread in results:
-        print(thread.title)
         user = DisplayUser(username=thread.username,
                            avatar=thread.avatar,
                            signature=thread.signature)
@@ -51,7 +42,6 @@ def update_thread(thread: schemas.Thread, db_thread: Thread, database):
     for var, value in vars(thread).items():
         setattr(db_thread, var, value) if value else None
     db_thread.dt_updated = datetime.datetime.now(datetime.timezone.utc)
-    print(db_thread)
     database.add(db_thread)
     database.commit()
     database.refresh(db_thread)

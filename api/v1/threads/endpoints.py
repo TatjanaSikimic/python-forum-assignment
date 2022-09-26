@@ -1,5 +1,4 @@
 from typing import List
-
 import config
 from . import helpers
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,11 +6,7 @@ from sqlalchemy.orm import Session
 import db.connection
 from db.models import Thread, User
 from .schemas import DisplayThread
-# from ..auth.jwt import get_current_user
-# from api.middlewares.auth_middleware import get_current_user
 import api.middlewares.auth_middleware as middleware
-from ..auth.schemas import TokenData
-
 from . import schemas
 
 router = APIRouter()
@@ -46,7 +41,6 @@ async def create_thread(data: schemas.CreateThread,
     if data.title is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty title not allowed!")
     current_user_id = int(current_user['sub'])
-    print(current_user_id)
 
     thread = await helpers.add_new_thread(data, current_user_id, database)
     return thread
@@ -57,7 +51,6 @@ async def create_thread(data: schemas.CreateThread,
 def update_thread(id_thread: int, data: schemas.Thread, database: Session = Depends(db.connection.get_db),
                   current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
-    print(current_user_id)
 
     thread = database.query(Thread).filter(Thread.id == id_thread).first()
 
@@ -85,7 +78,6 @@ def delete_thread(id_thread: int,
                   database: Session = Depends(db.connection.get_db),
                   current_user=Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
-    print(current_user_id)
 
     thread = database.query(Thread).filter(Thread.id == id_thread).first()
 

@@ -1,4 +1,3 @@
-import json
 import datetime
 from db.models import Post, Thread, Attachment, User, Comment
 from .schemas import DisplayPost, DisplayAttachment, DisplayPostWithThread, PostUpdate
@@ -29,7 +28,6 @@ async def create_post(post, user_id, thread, database):
     database.add(thread)
     database.commit()
     database.refresh(thread)
-    print(new_post)
     database.refresh(new_post)
 
     return new_post
@@ -91,7 +89,6 @@ async def get_posts_by_user(user_id, database):
     posts_db = database.query(Post).filter(Post.user_id == user_id).all()
 
     for post_db in posts_db:
-        print(post_db)
         post = await get_post_by_id(post_db, database)
         display_posts.append(post)
 
@@ -99,14 +96,6 @@ async def get_posts_by_user(user_id, database):
 
 
 async def get_post_by_id(post, database):
-
-    # results = database.query(User, Post, Attachment, Thread)\
-    #           .join(User, User.id == Post.user_id) \
-    #           .join(Post, Post.id == Attachment.post_id) \
-    #           .join(Thread, Thread.id == Post.thread_id).first()
-    #
-    #
-    # print(results)
     display_attachments = get_display_attachments(post.id, database)
 
     display_user = get_display_user(post.user_id, database)
@@ -127,7 +116,6 @@ async def get_post_by_id(post, database):
 
 def delete_attachments(post_id, database):
     attachments = database.query(Attachment).filter(Attachment.post_id == post_id).all()
-    # [database.delete(attachment) for attachment in attachments]
     for attachment in attachments:
         database.delete(attachment)
     database.commit()
@@ -135,7 +123,6 @@ def delete_attachments(post_id, database):
 
 def delete_comments(post_id, database):
     comments = database.query(Comment).filter(Comment.post_id == post_id).all()
-    # [database.delete(comment) for comment in comments]
     for comment in comments:
         database.delete(comment)
     database.commit()
@@ -151,7 +138,6 @@ def delete_post(post, database):
 
 async def update_post(post: PostUpdate, post_db: Post, thread, database):
     for attachment in post.attachments:
-        print(attachment.id)
 
         if attachment.id > 0:
             attachment_to_update = database.query(Attachment).filter(Attachment.id == attachment.id).first()

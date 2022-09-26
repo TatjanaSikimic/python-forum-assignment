@@ -23,7 +23,7 @@ thread_2 = {"title": "Beauty Tips"}
 user_1 = {"username": "user1", "password": "User1@123"}
 user_2 = {"username": "user5", "password": "User5@123"}
 thread_to_search_id = 8
-thread_to_delete_id = 18
+thread_to_delete_id = 19
 thread_to_update_id = 14
 thread_to_update = {
     "title": "Health",

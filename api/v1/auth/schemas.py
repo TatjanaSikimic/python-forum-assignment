@@ -4,6 +4,8 @@ from api.base.schemas import BaseModel
 from . import validator
 from pydantic import validator
 from . import validator as pass_validator
+
+
 class UserRegistration(BaseModel):
     username: str
     password: str
@@ -13,12 +15,14 @@ class UserRegistration(BaseModel):
         if not pass_validator.check_password_strength(v):
             raise ValueError('Entered password is weak!')
         return v
+
     pass  # Contains username and password
 
 
 class UserLogin(BaseModel):
     username: str
     password: str
+
 
 class Token(BaseModel):
     access_token: str

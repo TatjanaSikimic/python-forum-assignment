@@ -4,14 +4,13 @@ import humps
 
 def to_camel(string):
     return humps.camelize(string)
-    # first, *others = string.split('_')
-    # return ''.join([first.lower(), *map(str.title, others)])
 
 
 # This should be the base model that is inherited
 class BaseModel(PydanticBaseModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
     class Config:
         alias_generator = to_camel
         allow_population_by_field_name = True

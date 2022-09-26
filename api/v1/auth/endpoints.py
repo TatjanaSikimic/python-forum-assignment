@@ -10,11 +10,8 @@ import db.connection
 from . import schemas, validator, helpers
 from db.models import User
 
-from .jwt import sign_JWT, create_access_token #get_current_user
+from .jwt import sign_JWT
 import api.middlewares.auth_middleware as middleware
-from .schemas import TokenData, UserLogin
-# from api.middlewares.auth_middleware import add_process_time_header
-import api.dependencies.dependancies as dependancies
 
 router = APIRouter()
 token_url = config.TOKEN_URL
@@ -37,19 +34,6 @@ async def register_user(data: schemas.UserRegistration, database: Session = Depe
 # TODO: Add mechanism for registration described in README
 
 # TODO: Add mechanism for login described in README
-# @router.get('/me')
-# async def get_me(dependencies=Depends(JWTBearer())):
-#     print((dependencies))
-#     JWTBearer.verify_JWT(JWT_token=dependencies)
-#
-#     return "ok"
-
-@router.get('/me')
-async def get_me(current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
-    print(current_user)
-    print(current_user['sub'])
-    return "ok"
-
 
 @router.post('/login', status_code=status.HTTP_200_OK)
 def login_user(response: Response, request: OAuth2PasswordRequestForm = Depends(),
@@ -63,27 +47,15 @@ def login_user(response: Response, request: OAuth2PasswordRequestForm = Depends(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Password")
 
     auth_token = sign_JWT(str(user.id))
-    print(auth_token)
+
     response.set_cookie(key="auth_token", value=f"Bearer {auth_token['access_token']}", httponly=True)
-    print(response.body)
+
     return auth_token
-
-
-# @router.post('/login')
-# def login_user(request: UserLogin = Body(default=None), database: Session = Depends(db.connection.get_db)):
-#     user = database.query(User).filter(User.username == request.username).first()
-#
-#     if not user:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Credentials")
-#
-#     if not validator.verify_password(request.password, user.password):
-#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Password")
-#
-#     return sign_JWT(str(user.id))
 
 
 # TODO: Add mechanism for logout described in README
 @router.post('/logout', status_code=status.HTTP_200_OK)
-def logout_user(response: Response, current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
+def logout_user(response: Response,
+                current_user: User = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     response.delete_cookie(key='auth_token')
     return "User logged out."

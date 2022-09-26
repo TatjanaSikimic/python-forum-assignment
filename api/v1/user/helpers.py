@@ -1,7 +1,5 @@
 import datetime
 import json
-from time import strftime
-
 from api.v1.user.schemas import SendMessage, ReceiveMessage, DisplayUser
 from db.models import User
 
@@ -34,33 +32,27 @@ def prepare_message_for_sending(content, sender_id, database):
                                      content=content,
                                      user=sender)
 
-
     return message_to_send
 
+
 def prepare_message_for_receiving(message_json):
-    # print(message_json)
     receive_message_dict = json.loads(message_json)
-    # print(receive_message_dict)
-    print(receive_message_dict["user"]["username"])
     sender = DisplayUser(username=receive_message_dict["user"]["username"],
                          avatar=receive_message_dict["user"]["avatar"],
                          signature=receive_message_dict["user"]["signature"])
 
     dt_created_str = receive_message_dict["dt_created"]
-    #dt_created = datetime.datetime.strptime(dt_created_str, '%Y-%M-%dT%H:%M:%S.%f')
-    print(dt_created_str)
-    print(sender)
-    print(receive_message_dict["content"])
+
     message_to_receive = ReceiveMessage(dt_created=dt_created_str,
-                                     content=receive_message_dict["content"],
-                                     user=sender)
-    print(message_to_receive)
+                                        content=receive_message_dict["content"],
+                                        user=sender)
+
     return message_to_receive
+
 
 def prepare_messages_for_receiving(messages):
     messages_to_receive = []
     for message in messages:
-        print("Message:",message)
         messages_to_receive.append(prepare_message_for_receiving(message))
 
     return messages_to_receive

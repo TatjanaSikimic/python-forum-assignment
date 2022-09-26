@@ -1,20 +1,16 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_pagination import Params, Page, paginate
 from sqlalchemy.orm import Session
-
 import config
 import db
 from db.models import Post, Comment
 from . import helpers, schemas
 from .schemas import DisplayComment, DisplayCommentWithPost
-# from ..auth.jwt import get_current_user
-# from api.middlewares.auth_middleware import get_current_user
 import api.middlewares.auth_middleware as middleware
-import api.dependencies.dependancies as dependancies
+
 router = APIRouter()
 token_url = config.TOKEN_URL
+
 
 # TODO: Retrieve all comments that user created
 # TODO: Include post information for that specific comment
@@ -25,8 +21,7 @@ async def get_user_comments(params: Params = Depends(),
                             database: Session = Depends(db.connection.get_db),
                             current_user=Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
-    print(current_user_id)
-    print(current_user_id)
+
     comments = await helpers.get_user_comments(current_user_id, database)
     return paginate(comments, params)
 
@@ -38,7 +33,6 @@ async def get_post_comments(id_post: int,
                             params: Params = Depends(),
                             database: Session = Depends(db.connection.get_db)):
     post = database.query(Post).filter(Post.id == id_post).first()
-    print(post)
 
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -53,8 +47,7 @@ async def get_post_comments(id_post: int,
 @router.get('/single/{id_comment}', response_model=schemas.DisplayCommentWithThread)
 async def get_comment_by_id(id_comment: int, database: Session = Depends(db.connection.get_db)):
     comment = database.query(Comment).filter(Comment.id == id_comment).first()
-    print(comment.id)
-    print(comment.post_id)
+
     if not comment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Comment with id {id_comment} does not exist")
@@ -70,7 +63,7 @@ async def create_post_comment(id_post: int,
                               database: Session = Depends(db.connection.get_db),
                               current_user=Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
-    print(current_user_id)
+
     post = database.query(Post).filter(Post.id == id_post).first()
 
     if not post:
@@ -90,7 +83,6 @@ def update_post_comment(id_comment: int,
                         database: Session = Depends(db.connection.get_db),
                         current_user=Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
-    print(current_user_id)
 
     comment = database.query(Comment).filter(Comment.id == id_comment).first()
 
@@ -111,16 +103,16 @@ def update_post_comment(id_comment: int,
 @router.delete('/comments/{id_comment}', status_code=status.HTTP_200_OK)
 def delete_post_comment(id_comment: int,
                         database: Session = Depends(db.connection.get_db),
-                        current_user = Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
+                        current_user=Depends(middleware.OAuth2PasswordBearerWithCookie(tokenUrl=token_url))):
     current_user_id = int(current_user['sub'])
-    print(current_user_id)
+
     comment = database.query(Comment).filter(Comment.id == id_comment).first()
 
     if not comment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Comment with id {id_comment} does not exist")
     if comment.user_id != current_user_id:
-        raise  HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                             detail="Comment can only be deleted by the user who created it")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Comment can only be deleted by the user who created it")
     database.delete(comment)
     database.commit()

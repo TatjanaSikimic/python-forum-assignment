@@ -6,7 +6,6 @@ pika_clients: List[rabbit_pika_client.PikaClient] = []
 
 
 def get_pika_client(queue_name):
-    # pika_client = next(filter(lambda x: (x.publish_queue_name == queue_name), pika_clients))
     pika_client = None
     for pc in pika_clients:
         if pc.consume_queue_name == queue_name:

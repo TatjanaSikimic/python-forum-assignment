@@ -16,17 +16,16 @@ from fastapi import status
 
 client = TestClient(app)
 
+
 class ThreadsTests(TestCase):
     def test_create_thread(self):
         response = client.post('/login', data=globals.user_2)
 
         access_token = json.loads(response.text)['access_token']
-        print(access_token)
 
         response = client.post('/',
                                headers={"Authorization": f"Bearer {access_token}"},
                                json=globals.thread_1)
-        print(response.text)
 
         assert response.status_code == status.HTTP_201_CREATED
 
@@ -47,12 +46,10 @@ class ThreadsTests(TestCase):
         response = client.post('/login', data=globals.user_2)
 
         access_token = json.loads(response.text)['access_token']
-        print(access_token)
 
         response = client.put(f'/{globals.thread_to_update_id}',
                               headers={"Authorization": f"Bearer {access_token}"},
                               json=globals.thread_to_update)
-        print(response.text)
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -60,10 +57,8 @@ class ThreadsTests(TestCase):
         response = client.post('/login', data=globals.user_2)
 
         access_token = json.loads(response.text)['access_token']
-        print(access_token)
 
         response = client.delete(f'/{globals.thread_to_delete_id}',
                                  headers={"Authorization": f"Bearer {access_token}"})
-        print(response.text)
 
         assert response.status_code == status.HTTP_200_OK
