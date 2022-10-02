@@ -14,4 +14,5 @@ def get_pika_client(queue_name):
 
     if not pika_client:
         pika_client = rabbit_pika_client.PikaClient(queue_name)
+        pika_clients.append(pika_client)
     return pika_client
